@@ -235,7 +235,7 @@ td .fit-no{color:var(--warn);font-weight:600}
     <div class="group">
       <div class="label"><span class="title-row"><span class="step">5</span>Messages per chat</span><span class="val" id="turnsVal"></span></div>
       <p class="hint">Each new message resends the whole chat so far. Long chats cost more per message.</p>
-      <input type="range" id="turns" min="1" max="30" step="1" aria-label="Messages per conversation">
+      <input type="range" id="turns" min="1" max="100" step="1" aria-label="Messages per conversation">
     </div>
 
     <div class="group">
@@ -243,11 +243,11 @@ td .fit-no{color:var(--warn);font-weight:600}
       <div class="row2">
         <div>
           <div class="label" style="font-weight:500;font-size:13px"><span>People</span><span class="val" id="usersVal"></span></div>
-          <input type="range" id="users" min="0" max="100" step="1" aria-label="Number of people using it">
+          <input type="range" id="users" min="0" max="1000" step="1" aria-label="Number of people using it">
         </div>
         <div>
           <div class="label" style="font-weight:500;font-size:13px"><span>Chats each / mo</span><span class="val" id="cpuVal"></span></div>
-          <input type="range" id="cpu" min="1" max="200" step="1" aria-label="Chats per person per month">
+          <input type="range" id="cpu" min="0" max="1000" step="1" aria-label="Chats per person per month">
         </div>
       </div>
     </div>
@@ -401,7 +401,7 @@ const DEFAULTS = {kbPages:150, sys:800, q:"med", a:"med", turns:6, users:25, cpu
 
 let S = load();
 function load(){
-  try{ const raw = localStorage.getItem("tub-cost-calc-v1"); if(raw){ return Object.assign({}, DEFAULTS, JSON.parse(raw)); } }catch(e){}
+  try{ const raw = localStorage.getItem("tub-cost-calc-v1"); if(raw){ const o = Object.assign({}, DEFAULTS, JSON.parse(raw)); o.turns=Math.min(100,Math.max(1,o.turns)); o.users=Math.min(50000,Math.max(1,o.users)); o.cpu=Math.min(500,Math.max(1,o.cpu)); return o; } }catch(e){}
   return Object.assign({}, DEFAULTS, {provs:PORDER.slice()});
 }
 function save(){ try{ localStorage.setItem("tub-cost-calc-v1", JSON.stringify(S)); }catch(e){} }
@@ -409,8 +409,12 @@ function save(){ try{ localStorage.setItem("tub-cost-calc-v1", JSON.stringify(S)
 // log scales for sliders
 const kbFromSlider = v => v<=0 ? 0 : Math.round(Math.pow(10, (v/1000)*Math.log10(20000)));
 const kbToSlider = p => p<=0 ? 0 : Math.round(Math.log10(p)/Math.log10(20000)*1000);
-const usersFromSlider = v => Math.max(1, Math.round(Math.pow(10, (v/100)*Math.log10(5000))));
-const usersToSlider = u => Math.round(Math.log10(Math.max(1,u))/Math.log10(5000)*100);
+// log sliders on 0..1000 so small values stay easy to pick
+const logFrom = (v,max) => Math.max(1, Math.round(Math.pow(10, (v/1000)*Math.log10(max))));
+const logTo = (n,max) => Math.round(Math.log10(Math.max(1,n))/Math.log10(max)*1000);
+const USERS_MAX = 50000, CPU_MAX = 500;
+const usersFromSlider = v => logFrom(v, USERS_MAX);
+const usersToSlider = u => logTo(u, USERS_MAX);
 
 const $ = id => document.getElementById(id);
 const fmtInt = n => Math.round(n).toLocaleString("en-US");
@@ -523,7 +527,7 @@ function renderControls(){
   chipGroup($("aChips"), A_OPTS, S.a, o=>{S.a=o.k; update();}, o=>o.l+"<small>"+o.d+"</small>");
   $("turns").value = S.turns; $("turnsVal").textContent = S.turns+(S.turns===1?" message":" messages");
   $("users").value = usersToSlider(S.users); $("usersVal").textContent = fmtInt(S.users);
-  $("cpu").value = S.cpu; $("cpuVal").textContent = fmtInt(S.cpu);
+  $("cpu").value = logTo(S.cpu, CPU_MAX); $("cpuVal").textContent = fmtInt(S.cpu);
   chipGroup($("modeChips"), MODE_OPTS, S.mode, o=>{S.mode=o.k; update();});
   const autoTxt = I.mode==="full" ? "Auto is sending your whole knowledge base with each message." : I.mode==="rag" ? "Auto is using retrieval because your files are over ~225 pages." : "No files, so this setting doesn't apply.";
   $("modeHint").textContent = S.mode==="auto" ? autoTxt : S.mode==="full" ? "Every message carries all your files. Simple, but heavy." : "A search step finds the relevant pieces and sends only those.";
@@ -706,7 +710,7 @@ $("kb").addEventListener("input", e=>{ S.kbPages = kbFromSlider(+e.target.value)
 $("sys").addEventListener("input", e=>{ S.sys = +e.target.value; update(); });
 $("turns").addEventListener("input", e=>{ S.turns = +e.target.value; update(); });
 $("users").addEventListener("input", e=>{ S.users = usersFromSlider(+e.target.value); update(); });
-$("cpu").addEventListener("input", e=>{ S.cpu = +e.target.value; update(); });
+$("cpu").addEventListener("input", e=>{ S.cpu = logFrom(+e.target.value, CPU_MAX); update(); });
 $("chunk").addEventListener("input", e=>{ S.chunk = +e.target.value; update(); });
 $("cache").addEventListener("change", e=>{ S.cache = e.target.checked; update(); });
 document.querySelectorAll(".seg button[data-sort]").forEach(b=>b.addEventListener("click",()=>{ S.sort=b.dataset.sort; update(); }));
