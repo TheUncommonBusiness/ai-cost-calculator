@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Model Cost Calculator</title>
+<meta name="description" content="Moving a Custom GPT to another platform? See what each AI model would cost to run for your message lengths, your knowledge base, and your team size.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2323392F'/%3E%3Ctext x='32' y='44' font-family='Georgia' font-size='34' text-anchor='middle' fill='%23F0FE91'%3E%24%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#FDFFF2; --surface:#FFFFFF; --surface-2:#F4F7E6; --ink:#192520; --ink-2:#3C4A43; --muted:#66756C;
+  --heading:#23392F; --line:rgba(35,57,47,.12); --line-2:rgba(35,57,47,.22);
+  --accent:#F0FE91; --accent-ink:#192520; --hero:#23392F; --hero-ink:#FDFFF2; --sage:#9EAF9F;
+  --shadow:0 2px 8px rgba(35,57,47,.08); --shadow-lg:0 10px 30px rgba(35,57,47,.10);
+  --warn:#8A5A00; --warn-bg:#FFF4D6;
+  --c-anthropic:#1F8A5B; --c-openai:#8A55C4; --c-google:#A08A00; --c-xai:#0F8F9F; --c-open:#C46A2A;
+  --p1:#192520; --p2:#3D6150; --p3:#7E9A86; --p4:#B9CBA9; --p5:#DDEB6E;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#141E1A; --surface:#1F2E28; --surface-2:#253731; --ink:#EEF2E4; --ink-2:#C9D2C4; --muted:#93A396;
+    --heading:#FDFFF2; --line:rgba(253,255,242,.10); --line-2:rgba(253,255,242,.20);
+    --hero:#0F1814; --hero-ink:#FDFFF2; --shadow:0 2px 8px rgba(0,0,0,.25); --shadow-lg:0 10px 30px rgba(0,0,0,.35);
+    --warn:#F5C86A; --warn-bg:#3A3220;
+    --c-anthropic:#2FA06C; --c-openai:#A274DE; --c-google:#A89212; --c-xai:#22A7B8; --c-open:#CC7334;
+    --p1:#F0FE91; --p2:#B9CBA9; --p3:#7E9A86; --p4:#4F7564; --p5:#2E4A3E;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#141E1A; --surface:#1F2E28; --surface-2:#253731; --ink:#EEF2E4; --ink-2:#C9D2C4; --muted:#93A396;
+  --heading:#FDFFF2; --line:rgba(253,255,242,.10); --line-2:rgba(253,255,242,.20);
+  --hero:#0F1814; --hero-ink:#FDFFF2; --shadow:0 2px 8px rgba(0,0,0,.25); --shadow-lg:0 10px 30px rgba(0,0,0,.35);
+  --warn:#F5C86A; --warn-bg:#3A3220;
+  --c-anthropic:#2FA06C; --c-openai:#A274DE; --c-google:#A89212; --c-xai:#22A7B8; --c-open:#CC7334;
+    --p1:#F0FE91; --p2:#B9CBA9; --p3:#7E9A86; --p4:#4F7564; --p5:#2E4A3E;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,"Segoe UI",sans-serif;font-weight:400;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:Lora,Georgia,"Times New Roman",serif;font-weight:500;color:var(--heading);margin:0}
+em.hl{font-style:italic}
+a{color:inherit}
+.wrap{max-width:1240px;margin:0 auto;padding:0 16px}
+
+/* hero */
+.hero{background:var(--hero);color:var(--hero-ink);padding:44px 0 92px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-120px;top:-120px;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(240,254,145,.16),transparent 70%)}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.hero h1{color:var(--hero-ink);font-size:clamp(32px,5vw,54px);line-height:1.08;margin:12px 0 14px;max-width:820px}
+.hero h1 em{color:var(--accent)}
+.hero p{max-width:640px;color:rgba(253,255,242,.82);font-weight:300;font-size:17px;margin:0}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:30px;gap:12px}
+.brand{font-weight:700;font-size:14px;letter-spacing:.02em;color:var(--hero-ink);text-decoration:none}
+.theme-btn{background:transparent;border:1px solid rgba(253,255,242,.3);color:var(--hero-ink);border-radius:999px;padding:6px 12px;font:500 13px Inter,sans-serif;cursor:pointer}
+
+/* layout */
+.main{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:24px;margin-top:-64px;position:relative;z-index:2;padding-bottom:60px}
+@media (max-width:960px){.main{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.controls{padding:22px 20px;align-self:start;position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}
+@media (max-width:960px){.controls{position:static;max-height:none}}
+.group{padding:16px 0;border-top:1px solid var(--line)}
+.group:first-child{border-top:0;padding-top:0}
+.label{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-weight:600;font-size:14px;color:var(--heading);margin-bottom:4px}
+.label .val{font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.hint{font-size:12.5px;color:var(--muted);margin:2px 0 10px}
+.step{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700;margin-right:8px;flex:none}
+.title-row{display:flex;align-items:center}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line-2);background:transparent;color:var(--ink-2);border-radius:999px;padding:6px 11px;font:500 12.5px Inter,sans-serif;cursor:pointer;transition:all .15s}
+.chip:hover{border-color:var(--heading);color:var(--ink)}
+.chip[aria-pressed="true"]{background:var(--heading);border-color:var(--heading);color:var(--bg)}
+:root[data-theme="dark"] .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}}
+.chip small{opacity:.7;font-weight:400;margin-left:4px}
+
+input[type=range]{width:100%;accent-color:var(--heading);margin:6px 0 2px;height:24px}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) input[type=range]{accent-color:var(--accent)}}
+:root[data-theme="dark"] input[type=range]{accent-color:var(--accent)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.toggle{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13.5px;color:var(--ink-2);margin-top:8px}
+.switch{position:relative;width:40px;height:22px;flex:none}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--line-2);border-radius:999px;cursor:pointer;transition:.2s}
+.switch span::before{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+span{background:var(--heading)}
+.switch input:checked+span::before{transform:translateX(18px)}
+.switch input:focus-visible+span{outline:2px solid var(--heading);outline-offset:2px}
+details.adv summary{cursor:pointer;font-weight:600;font-size:14px;color:var(--heading);list-style:none;display:flex;justify-content:space-between}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary::after{content:"+";font-weight:400}
+details.adv[open] summary::after{content:"−"}
+.adv-body{padding-top:10px}
+
+/* results */
+.results{display:flex;flex-direction:column;gap:20px;min-width:0}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:720px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{padding:16px}
+.stat .k{font-size:12px;color:var(--muted);font-weight:500}
+.stat .v{font-family:Lora,Georgia,serif;font-size:clamp(22px,2.6vw,30px);color:var(--heading);margin-top:4px;font-variant-numeric:tabular-nums;line-height:1.1;word-break:break-word}
+.stat .s{font-size:12px;color:var(--muted);margin-top:4px}
+.stat.feature{background:var(--hero);border-color:transparent}
+.stat.feature .k,.stat.feature .s{color:rgba(253,255,242,.7)}
+.stat.feature .v{color:var(--accent)}
+
+.section{padding:22px 20px}
+.section h2{font-size:24px;margin-bottom:6px}
+.section .sub{color:var(--muted);font-size:14px;margin:0 0 16px;max-width:720px}
+
+.kb-verdict{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;padding:16px;border-radius:12px;background:var(--surface-2);margin-bottom:18px}
+.kb-meter{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font:700 12px Inter,sans-serif;color:var(--heading);background:conic-gradient(var(--heading) var(--pct,10%),var(--line) 0)}
+.kb-meter span{width:50px;height:50px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center;text-align:center;line-height:1.1}
+.kb-verdict h3{font-size:18px;margin-bottom:4px}
+.kb-verdict p{margin:0;font-size:14px;color:var(--ink-2)}
+.kb-verdict ul{margin:8px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-2)}
+.kb-verdict li{margin:3px 0}
+
+.picks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:820px){.picks{grid-template-columns:minmax(0,1fr)}}
+.pick{border:1px solid var(--line);border-radius:14px;padding:16px;position:relative;background:var(--surface)}
+.pick.best{border:2px solid var(--heading)}
+.pick .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--surface-2);color:var(--heading)}
+.pick.best .tag{background:var(--accent);color:var(--accent-ink)}
+.pick h3{font-size:20px;margin:10px 0 2px}
+.pick .prov{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex:none}
+.pick .price{font-family:Lora,Georgia,serif;font-size:26px;color:var(--heading);margin-top:12px;font-variant-numeric:tabular-nums}
+.pick .price small{font-family:Inter,sans-serif;font-size:13px;color:var(--muted)}
+.pick p{font-size:13px;color:var(--ink-2);margin:8px 0 0}
+
+/* chart */
+.toolbar{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:14px}
+.legend-chip{display:inline-flex;align-items:center;gap:6px}
+.toolbar .segs{display:flex;gap:8px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:999px;overflow:hidden}
+.seg button{border:0;background:transparent;color:var(--ink-2);padding:6px 12px;font:500 12.5px Inter,sans-serif;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--heading);font-weight:700}
+.chart{display:flex;flex-direction:column;gap:2px}
+.bar-row{display:grid;grid-template-columns:215px minmax(0,1fr);align-items:center;gap:12px;padding:5px 6px;border-radius:8px;cursor:default;position:relative}
+.bar-row:hover,.bar-row:focus-visible{background:var(--surface-2);outline:none}
+.bar-name{font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px}
+.bar-name .tier{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bar-track{display:flex;align-items:center;gap:8px;min-width:0}
+.bar{height:16px;border-radius:0 4px 4px 0;min-width:3px;transition:width .35s ease}
+.bar.nofit{background-image:repeating-linear-gradient(45deg,transparent 0 4px,rgba(255,255,255,.45) 4px 7px)}
+.bar-val{font-size:12.5px;font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar-val .warn{color:var(--warn);font-weight:600;margin-left:6px}
+@media (max-width:560px){.bar-row{grid-template-columns:minmax(0,1fr)}.bar-name{white-space:normal}}
+.axis-note{font-size:12px;color:var(--muted);margin-top:10px}
+
+.tip{position:fixed;z-index:50;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--line-2);border-radius:10px;box-shadow:var(--shadow-lg);padding:10px 12px;font-size:12.5px;min-width:220px;max-width:280px;opacity:0;transition:opacity .12s}
+.tip.on{opacity:1}
+.tip h4{margin:0 0 6px;font:600 13.5px Inter,sans-serif;color:var(--heading);display:flex;align-items:center;gap:6px}
+.tip .r{display:flex;justify-content:space-between;gap:12px;padding:2px 0;color:var(--ink-2)}
+.tip .r b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:600}
+
+/* table */
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:820px}
+th,td{padding:9px 12px;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child,th:nth-child(2),td:nth-child(2){text-align:left}
+thead th{background:var(--hero);color:var(--hero-ink);font-weight:600;font-size:12px;position:sticky;top:0;cursor:pointer;user-select:none}
+thead th[aria-sort]::after{content:" ↓";opacity:.7}
+thead th[aria-sort="ascending"]::after{content:" ↑"}
+tbody tr:nth-child(even){background:var(--surface-2)}
+td .fit-no{color:var(--warn);font-weight:600}
+
+/* breakdown */
+.break{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+@media (max-width:720px){.break{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.brk{background:var(--surface-2);border-radius:12px;padding:12px}
+.brk .k{font-size:12px;color:var(--muted)}
+.brk .v{font-weight:700;font-size:17px;color:var(--heading);font-variant-numeric:tabular-nums}
+.stackbar{display:flex;height:14px;border-radius:4px;overflow:hidden;margin:14px 0 8px;gap:2px;background:transparent}
+.stackbar div{height:100%;transition:flex .3s}
+.stack-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--ink-2)}
+
+.callout{background:var(--warn-bg);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:13.5px;margin-top:14px}
+.callout b{color:var(--warn)}
+.foot{font-size:12.5px;color:var(--muted);line-height:1.6}
+.foot h3{font-size:16px;margin:0 0 8px}
+.foot ul{padding-left:18px;margin:6px 0 14px}
+.foot a{color:var(--heading)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+:focus-visible{outline:2px solid var(--heading);outline-offset:2px}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <div class="topbar">
+      <a class="brand" href="https://theuncommonbusiness.com" target="_blank" rel="noopener">The Uncommon Business</a>
+      <button class="theme-btn" id="themeBtn" type="button" aria-label="Toggle dark mode">Theme</button>
+    </div>
+    <div class="eyebrow">AI Model Cost Calculator</div>
+    <h1>See what your GPT will cost to run <em>anywhere else.</em></h1>
+    <p>Moving a Custom GPT to another platform means paying per token. Set your message lengths, your knowledge base, and your team size, and you'll see the monthly bill for 22 models from Anthropic, OpenAI, Google, xAI, and the open-weight world.</p>
+  </div>
+</header>
+
+<main class="wrap main">
+  <!-- CONTROLS -->
+  <aside class="card controls" aria-label="Calculator inputs">
+    <div class="group">
+      <div class="label"><span class="title-row"><span class="step">1</span>Knowledge base</span><span class="val" id="kbVal"></span></div>
+      <p class="hint">The files you uploaded to your GPT. One page is about 500 words.</p>
+      <div class="chips" id="kbPresets"></div>
+      <input type="range" id="kb" min="0" max="1000" step="1" aria-label="Knowledge base size in pages">
+      <p class="hint" id="kbTokHint" style="margin:0"></p>
+    </div>
+
+    <div class="group">
+      <div class="label"><span class="title-row"><span class="step">2</span>Instructions</span><span class="val" id="sysVal"></span></div>
+      <p class="hint">Your GPT's system prompt. The Custom GPT limit is 8,000 characters, about 1,300 words.</p>
+      <input type="range" id="sys" min="50" max="4000" step="50" aria-label="Instruction length in words">
+    </div>
+
+    <div class="group">
+      <div class="label"><span class="title-row"><span class="step">3</span>Typical question</span><span class="val" id="qVal"></span></div>
+      <div class="chips" id="qChips"></div>
+      <div class="label" style="margin-top:14px"><span class="title-row"><span class="step">4</span>Typical answer</span><span class="val" id="aVal"></span></div>
+      <div class="chips" id="aChips"></div>
+    </div>
+
+    <div class="group">
+      <div class="label"><span class="title-row"><span class="step">5</span>Messages per chat</span><span class="val" id="turnsVal"></span></div>
+      <p class="hint">Each new message resends the whole chat so far. Long chats cost more per message.</p>
+      <input type="range" id="turns" min="1" max="30" step="1" aria-label="Messages per conversation">
+    </div>
+
+    <div class="group">
+      <div class="label"><span class="title-row"><span class="step">6</span>Usage</span></div>
+      <div class="row2">
+        <div>
+          <div class="label" style="font-weight:500;font-size:13px"><span>People</span><span class="val" id="usersVal"></span></div>
+          <input type="range" id="users" min="0" max="100" step="1" aria-label="Number of people using it">
+        </div>
+        <div>
+          <div class="label" style="font-weight:500;font-size:13px"><span>Chats each / mo</span><span class="val" id="cpuVal"></span></div>
+          <input type="range" id="cpu" min="1" max="200" step="1" aria-label="Chats per person per month">
+        </div>
+      </div>
+    </div>
+
+    <div class="group">
+      <details class="adv" id="adv">
+        <summary>Advanced settings</summary>
+        <div class="adv-body">
+          <div class="label" style="font-size:13px"><span>How the model reads your files</span></div>
+          <div class="chips" id="modeChips"></div>
+          <p class="hint" id="modeHint"></p>
+          <div id="chunkWrap">
+            <div class="label" style="font-weight:500;font-size:13px"><span>Retrieved text per message</span><span class="val" id="chunkVal"></span></div>
+            <input type="range" id="chunk" min="1000" max="30000" step="500" aria-label="Retrieved tokens per message">
+          </div>
+          <div class="label" style="font-size:13px;margin-top:12px"><span>Hidden thinking</span></div>
+          <div class="chips" id="thinkChips"></div>
+          <p class="hint">Reasoning models write private notes before answering. You pay for those as output.</p>
+          <label class="toggle"><span>Prompt caching<br><small style="color:var(--muted)">Reused text bills at a steep discount</small></span>
+            <span class="switch"><input type="checkbox" id="cache" checked><span></span></span></label>
+        </div>
+      </details>
+    </div>
+    <button class="chip" id="resetBtn" type="button" style="width:100%;margin-top:6px">Reset to defaults</button>
+  </aside>
+
+  <!-- RESULTS -->
+  <section class="results" aria-live="polite">
+    <div class="stats">
+      <div class="card stat feature"><div class="k">Top pick, per month</div><div class="v" id="sPick"></div><div class="s" id="sPickName"></div></div>
+      <div class="card stat"><div class="k">Per message</div><div class="v" id="sMsg"></div><div class="s">with the top pick</div></div>
+      <div class="card stat"><div class="k">Messages per month</div><div class="v" id="sVol"></div><div class="s" id="sVolSub"></div></div>
+      <div class="card stat"><div class="k">Tokens sent per message</div><div class="v" id="sTok"></div><div class="s">average, before caching</div></div>
+    </div>
+
+    <div class="card section">
+      <h2>Our recommendation</h2>
+      <p class="sub">Based on your knowledge base size and usage. Prices update as you move the sliders.</p>
+      <div class="kb-verdict">
+        <div class="kb-meter" id="kbMeter"><span id="kbMeterTxt"></span></div>
+        <div><h3 id="kbTitle"></h3><p id="kbText"></p><ul id="kbList"></ul></div>
+      </div>
+      <div class="picks" id="picks"></div>
+      <div class="callout" id="callout" hidden></div>
+    </div>
+
+    <div class="card section">
+      <h2>Monthly cost by model</h2>
+      <p class="sub">Hover or tap a bar for the full breakdown. Striped bars can't fit your full knowledge base, so they're priced with retrieval instead.</p>
+      <div class="toolbar">
+        <div class="chips" id="provChips" role="group" aria-label="Filter by provider"></div>
+        <div class="segs">
+        <div class="seg" role="group" aria-label="Sort order">
+          <button type="button" data-sort="cost" aria-pressed="true">Cheapest first</button>
+          <button type="button" data-sort="provider" aria-pressed="false">By provider</button>
+        </div>
+        <div class="seg" role="group" aria-label="Bar scale">
+          <button type="button" data-scale="linear" aria-pressed="true">Linear</button>
+          <button type="button" data-scale="log" aria-pressed="false">Log scale</button>
+        </div>
+        </div>
+      </div>
+      <div class="chart" id="chart"></div>
+      <p class="axis-note" id="axisNote"></p>
+    </div>
+
+    <div class="card section">
+      <h2>Where the money goes</h2>
+      <p class="sub" id="breakSub"></p>
+      <div class="break" id="break"></div>
+      <div class="stackbar" id="stackbar" aria-hidden="true"></div>
+      <div class="stack-legend" id="stackLegend"></div>
+    </div>
+
+    <div class="card section">
+      <h2>Every model, side by side</h2>
+      <p class="sub">Click a column to sort. List prices are per 1 million tokens.</p>
+      <div class="table-wrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+    </div>
+
+    <div class="card section foot">
+      <h3>How the math works</h3>
+      <ul>
+        <li>One token is about three quarters of a word, so we use 1.33 tokens per word and 500 words per page.</li>
+        <li>Every message sends your instructions, the knowledge text, the chat so far, and the new question. The answer and any hidden thinking bill as output.</li>
+        <li>With caching on, the parts that repeat (instructions, full knowledge base, earlier messages) bill at each provider's cached rate, and we assume 10% of those reads miss the cache. Anthropic cache misses bill at 1.25x to cover the cache write.</li>
+        <li>We add 300 tokens per message for platform overhead like formatting and tool definitions.</li>
+        <li>Your third-party platform may add its own markup or seat fees on top. These are raw model costs.</li>
+      </ul>
+      <h3>Where the prices come from</h3>
+      <ul>
+        <li>List prices checked October 1, 2026 from <a href="https://www.anthropic.com/pricing" target="_blank" rel="noopener">Anthropic</a>, <a href="https://openai.com/api/pricing/" target="_blank" rel="noopener">OpenAI</a>, <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noopener">Google Gemini</a>, <a href="https://docs.x.ai/docs/models" target="_blank" rel="noopener">xAI</a>, <a href="https://api-docs.deepseek.com/quick_start/pricing" target="_blank" rel="noopener">DeepSeek</a>, <a href="https://platform.moonshot.ai/" target="_blank" rel="noopener">Moonshot</a>, <a href="https://docs.z.ai/guides/overview/pricing" target="_blank" rel="noopener">Z.AI</a>, <a href="https://mistral.ai/pricing" target="_blank" rel="noopener">Mistral</a>, <a href="https://www.alibabacloud.com/help/en/model-studio/models" target="_blank" rel="noopener">Alibaba Cloud</a>, and <a href="https://groq.com/pricing" target="_blank" rel="noopener">Groq</a>.</li>
+        <li>Open-weight models can also run on your own servers or another host, so their price depends on where you run them. Rates shown are the maker's own API, or Groq where noted.</li>
+        <li>Gemini 3.8 Flash uses Google's introductory rate. Grok 4.1 Fast uses xAI's last published rate.</li>
+        <li>Tiers are our own grouping: Frontier is each lab's top model, Strong handles most business work well, and Value is built for speed and price.</li>
+        <li>AI prices drop fast. Check the provider's page before you sign anything.</li>
+      </ul>
+      <p>Built by <a href="https://theuncommonbusiness.com" target="_blank" rel="noopener">The Uncommon Business</a>.</p>
+    </div>
+  </section>
+</main>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+(function(){
+"use strict";
+const PRICES_AS_OF = "October 1, 2026";
+// in/out/cache = USD per 1M tokens. cache=null means no published cached rate.
+const MODELS = [
+  {id:"fable51", name:"Claude Fable 5.1", p:"anthropic", tier:"Frontier", in:10, out:50, cache:0.25, ctx:1000000},
+  {id:"opus55", name:"Claude Opus 5.5", p:"anthropic", tier:"Frontier", in:4, out:20, cache:0.20, ctx:1000000},
+  {id:"sonnet55", name:"Claude Sonnet 5.5", p:"anthropic", tier:"Strong", in:2, out:10, cache:0.20, ctx:1000000},
+  {id:"haiku45", name:"Claude Haiku 4.5", p:"anthropic", tier:"Value", in:1, out:5, cache:0.10, ctx:200000},
+  {id:"gpt6astra", name:"GPT-6 Astra", p:"openai", tier:"Frontier", in:10, out:50, cache:1.00, ctx:1050000},
+  {id:"gpt61sol", name:"GPT-6.1 Sol", p:"openai", tier:"Strong", in:2, out:10, cache:0.10, ctx:1050000},
+  {id:"gpt54mini", name:"GPT-5.4 mini", p:"openai", tier:"Value", in:0.75, out:4.5, cache:0.075, ctx:400000},
+  {id:"gpt6luna", name:"GPT-6 Luna", p:"openai", tier:"Value", in:0.10, out:0.50, cache:0.01, ctx:1050000},
+  {id:"gem31pro", name:"Gemini 3.1 Pro", p:"google", tier:"Strong", in:2, out:12, cache:0.20, ctx:1000000},
+  {id:"gem38flash", name:"Gemini 3.8 Flash", p:"google", tier:"Strong", in:0.75, out:3.75, cache:0.075, ctx:1000000, note:"Introductory rate"},
+  {id:"gem35lite", name:"Gemini 3.5 Flash-Lite", p:"google", tier:"Value", in:0.30, out:2.5, cache:0.03, ctx:1000000},
+  {id:"grok47", name:"Grok 4.7", p:"xai", tier:"Strong", in:2, out:6, cache:0.50, ctx:500000},
+  {id:"grok43", name:"Grok 4.3", p:"xai", tier:"Strong", in:1.25, out:2.5, cache:0.20, ctx:1000000},
+  {id:"grok41fast", name:"Grok 4.1 Fast", p:"xai", tier:"Value", in:0.20, out:0.50, cache:null, ctx:2000000, note:"Last published rate"},
+  {id:"dsv4pro", name:"DeepSeek V4 Pro", p:"open", tier:"Strong", in:1.32, out:3.96, cache:0.044, ctx:1000000, host:"DeepSeek API"},
+  {id:"dsv41flash", name:"DeepSeek V4.1 Flash", p:"open", tier:"Value", in:0.30, out:1.20, cache:0.006, ctx:1000000, host:"DeepSeek API"},
+  {id:"kimik26", name:"Kimi K2.6", p:"open", tier:"Strong", in:0.95, out:4, cache:0.16, ctx:256000, host:"Moonshot API"},
+  {id:"glm52", name:"GLM-5.2", p:"open", tier:"Strong", in:1.40, out:4.40, cache:null, ctx:1000000, host:"Z.AI API"},
+  {id:"qwen35", name:"Qwen3.5 397B", p:"open", tier:"Strong", in:0.60, out:3.60, cache:null, ctx:128000, host:"Alibaba Cloud"},
+  {id:"mistralm35", name:"Mistral Medium 3.5", p:"open", tier:"Value", in:1.50, out:7.50, cache:null, ctx:256000, host:"Mistral API"},
+  {id:"gptoss120", name:"gpt-oss-120b", p:"open", tier:"Value", in:0.15, out:0.75, cache:null, ctx:131000, host:"Groq"},
+  {id:"llama4mav", name:"Llama 4 Maverick", p:"open", tier:"Value", in:0.20, out:0.60, cache:null, ctx:131000, host:"Groq"}
+];
+const PROVIDERS = {
+  anthropic:{name:"Anthropic", v:"--c-anthropic"},
+  openai:{name:"OpenAI", v:"--c-openai"},
+  google:{name:"Google", v:"--c-google"},
+  xai:{name:"xAI", v:"--c-xai"},
+  open:{name:"Open-weight", v:"--c-open"}
+};
+const PORDER = ["anthropic","openai","google","xai","open"];
+const TIER_RANK = {Frontier:0, Strong:1, Value:2};
+const TPW = 1.33, WPP = 500, OVERHEAD = 300, MISS = 0.10, FULL_LIMIT = 150000;
+
+const Q_OPTS = [{k:"short",l:"Short",w:30,d:"a quick question"},{k:"med",l:"Medium",w:150,d:"a paragraph"},{k:"long",l:"Long",w:600,d:"pasted email or notes"},{k:"xl",l:"Very long",w:2000,d:"a pasted document"}];
+const A_OPTS = [{k:"short",l:"Short",w:80,d:"a few lines"},{k:"med",l:"Medium",w:300,d:"a solid answer"},{k:"long",l:"Long",w:800,d:"a full draft"},{k:"xl",l:"Very long",w:2000,d:"a long document"}];
+const KB_PRESETS = [{l:"None",p:0},{l:"A few docs",p:20},{l:"Handbook",p:150},{l:"Course library",p:1500},{l:"Everything",p:10000}];
+const MODE_OPTS = [{k:"auto",l:"Auto"},{k:"full",l:"Whole file every time"},{k:"rag",l:"Search and pull pieces"}];
+const THINK_OPTS = [{k:0,l:"None"},{k:0.5,l:"Light (+50%)"},{k:1.5,l:"Heavy (+150%)"}];
+const DEFAULTS = {kbPages:150, sys:800, q:"med", a:"med", turns:6, users:25, cpu:20, mode:"auto", chunk:6000, think:0.5, cache:true, provs:PORDER.slice(), sort:"cost", scale:"linear"};
+
+let S = load();
+function load(){
+  try{ const raw = localStorage.getItem("tub-cost-calc-v1"); if(raw){ return Object.assign({}, DEFAULTS, JSON.parse(raw)); } }catch(e){}
+  return Object.assign({}, DEFAULTS, {provs:PORDER.slice()});
+}
+function save(){ try{ localStorage.setItem("tub-cost-calc-v1", JSON.stringify(S)); }catch(e){} }
+
+// log scales for sliders
+const kbFromSlider = v => v<=0 ? 0 : Math.round(Math.pow(10, (v/1000)*Math.log10(20000)));
+const kbToSlider = p => p<=0 ? 0 : Math.round(Math.log10(p)/Math.log10(20000)*1000);
+const usersFromSlider = v => Math.max(1, Math.round(Math.pow(10, (v/100)*Math.log10(5000))));
+const usersToSlider = u => Math.round(Math.log10(Math.max(1,u))/Math.log10(5000)*100);
+
+const $ = id => document.getElementById(id);
+const fmtInt = n => Math.round(n).toLocaleString("en-US");
+function fmtTok(n){ if(n>=1e6) return (n/1e6).toFixed(n>=1e7?0:1).replace(/\.0$/,"")+"M"; if(n>=1e3) return (n/1e3).toFixed(n>=1e5?0:1).replace(/\.0$/,"")+"K"; return fmtInt(n); }
+function fmtUSD(n){
+  if(!isFinite(n)) return "–";
+  if(n===0) return "$0";
+  if(n<0.01) return "$"+n.toFixed(4).replace(/0+$/,"");
+  if(n<1) return "$"+n.toFixed(3).replace(/0$/,"");
+  if(n<100) return "$"+n.toFixed(2);
+  return "$"+Math.round(n).toLocaleString("en-US");
+}
+const cssVar = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+// ---------- core math ----------
+function inputs(){
+  const q = Q_OPTS.find(o=>o.k===S.q), a = A_OPTS.find(o=>o.k===S.a);
+  const kbTok = S.kbPages*WPP*TPW;
+  const sysTok = S.sys*TPW + OVERHEAD;
+  const u = q.w*TPW, rVis = a.w*TPW, rOut = rVis*(1+S.think);
+  let mode = S.mode;
+  if(mode==="auto") mode = kbTok<=FULL_LIMIT ? "full" : "rag";
+  if(kbTok===0) mode = "none";
+  return {kbTok, sysTok, u, rVis, rOut, mode, turns:S.turns, users:S.users, cpu:S.cpu, chunk:S.chunk, cache:S.cache};
+}
+function maxInput(I, mode){
+  const kb = mode==="full" ? I.kbTok : mode==="rag" ? I.chunk : 0;
+  return I.sysTok + kb + (I.turns-1)*(I.u+I.rVis) + I.u;
+}
+function costFor(m, I, forceMode){
+  let mode = forceMode || I.mode;
+  let fallback = false;
+  if(mode==="full" && maxInput(I,"full") > m.ctx){ mode = "rag"; fallback = true; }
+  const kbFixed = mode==="full" ? I.kbTok : 0;
+  const kbVar = mode==="rag" ? Math.min(I.chunk, I.kbTok) : 0;
+  const cachePrice = (I.cache && m.cache!=null) ? m.cache : m.in;
+  const missPrice = m.p==="anthropic" && I.cache ? m.in*1.25 : m.in;
+  let inCost=0, outCost=0, tokIn=0, parts={sys:0,kb:0,hist:0,q:0,out:0};
+  for(let i=1;i<=I.turns;i++){
+    const hist = (i-1)*(I.u+I.rVis);
+    const stable = I.sysTok + kbFixed;
+    const cacheable = stable + hist;
+    const fresh = kbVar + I.u;
+    let cCost;
+    if(I.cache && m.cache!=null){
+      cCost = (cacheable*(1-MISS)*cachePrice + cacheable*MISS*missPrice)/1e6;
+    } else {
+      cCost = cacheable*m.in/1e6;
+    }
+    const fCost = fresh*m.in/1e6;
+    inCost += cCost + fCost;
+    tokIn += cacheable + fresh;
+    // attribute cost to parts (proportional within cacheable block)
+    const perTokC = cacheable ? cCost/cacheable : 0;
+    parts.sys += I.sysTok*perTokC;
+    parts.kb += kbFixed*perTokC + kbVar*m.in/1e6;
+    parts.hist += hist*perTokC;
+    parts.q += I.u*m.in/1e6;
+    const o = I.rOut*m.out/1e6;
+    outCost += o; parts.out += o;
+  }
+  const conv = inCost + outCost;
+  const msgs = I.turns*I.users*I.cpu;
+  const monthly = conv*I.users*I.cpu;
+  return {m, mode, fallback, conv, msg:conv/I.turns, monthly, inMonthly:inCost*I.users*I.cpu, outMonthly:outCost*I.users*I.cpu,
+          tokPerMsg:tokIn/I.turns, maxIn:maxInput(I,mode), fits:maxInput(I,mode)<=m.ctx, parts, msgs};
+}
+
+// ---------- recommendation ----------
+function kbVerdict(I){
+  const t = I.kbTok, pages = S.kbPages;
+  if(t===0) return {pct:2, title:"No knowledge base", text:"Your GPT runs on instructions alone, so cost comes down to message length and volume. Any model on this list can handle it.", list:["Start with a Strong tier model and only move up if answers fall short.","Caching your instructions trims cost on every message."]};
+  if(t<=40000) return {pct:8, title:"Small knowledge base, about "+fmtInt(pages)+" pages", text:"This is small enough to send the whole thing with every message. That's the simplest setup, and with caching the repeat cost is tiny.", list:["Paste the files into the system prompt, or upload them as-is.","Every model on this list can hold it.","Turn caching on. It cuts the knowledge cost by up to 90% on most providers."]};
+  if(t<=FULL_LIMIT) return {pct:22, title:"Medium knowledge base, about "+fmtInt(pages)+" pages", text:"You can still send it all every time, and caching keeps it affordable. Some smaller models start to run out of room, though, and at high volume a search-and-retrieve setup gets cheaper.", list:["Use a model with a 1M token window if you want the whole file in every message.","Compare both setups in Advanced settings. At high volume retrieval often wins.","Make sure your platform supports prompt caching, since that's where most of the savings come from."]};
+  if(t<=800000) return {pct:60, title:"Large knowledge base, about "+fmtInt(pages)+" pages", text:"Sending this with every message gets expensive fast and only fits in the biggest models. Use retrieval, which searches your files and sends just the relevant pieces, the same way Custom GPTs work today.", list:["Pick a platform that offers file search or a vector database.","Plan for 4,000 to 10,000 tokens of retrieved text per message.","Clean files matter more than model choice here. Split big PDFs by topic and cut duplicates."]};
+  return {pct:100, title:"Very large knowledge base, about "+fmtInt(pages)+" pages", text:"No model can hold all of this at once, so retrieval isn't optional. The model only ever sees the few pieces your search step finds.", list:["You need a platform with a real retrieval layer, not just file upload.","Quality depends on search, so test answers on your hardest questions before you migrate.","Consider splitting into several focused assistants, each with a smaller library."]};
+}
+function picks(rows){
+  const ok = rows.filter(r=>r.fits);
+  const by = arr => arr.slice().sort((a,b)=>a.monthly-b.monthly)[0];
+  const closed = ok.filter(r=>r.m.p!=="open");
+  const top = by(closed.filter(r=>r.m.tier==="Frontier")) || by(ok.filter(r=>r.m.tier==="Frontier"));
+  const value = by(closed.filter(r=>r.m.tier==="Strong")) || by(ok.filter(r=>r.m.tier==="Strong"));
+  const cheap = by(ok);
+  return {top, value, cheap};
+}
+
+// ---------- render ----------
+function chipGroup(el, opts, cur, onPick, labeler){
+  el.innerHTML = "";
+  opts.forEach(o=>{
+    const b = document.createElement("button");
+    b.type="button"; b.className="chip";
+    b.innerHTML = labeler ? labeler(o) : o.l;
+    b.setAttribute("aria-pressed", String(o.k===cur));
+    b.addEventListener("click", ()=>onPick(o));
+    el.appendChild(b);
+  });
+}
+function renderControls(){
+  const I = inputs();
+  $("kb").value = kbToSlider(S.kbPages);
+  $("kbVal").textContent = S.kbPages===0 ? "None" : fmtInt(S.kbPages)+" pages";
+  $("kbTokHint").textContent = S.kbPages===0 ? "No files uploaded." : "≈ "+fmtInt(S.kbPages*WPP)+" words, "+fmtTok(I.kbTok)+" tokens";
+  chipGroup($("kbPresets"), KB_PRESETS.map(p=>({k:p.p,l:p.l,p:p.p})), S.kbPages, o=>{S.kbPages=o.p; update();});
+  $("sys").value = S.sys; $("sysVal").textContent = fmtInt(S.sys)+" words";
+  const qo = Q_OPTS.find(o=>o.k===S.q), ao = A_OPTS.find(o=>o.k===S.a);
+  $("qVal").textContent = "~"+fmtInt(qo.w)+" words"; $("aVal").textContent = "~"+fmtInt(ao.w)+" words";
+  chipGroup($("qChips"), Q_OPTS, S.q, o=>{S.q=o.k; update();}, o=>o.l+"<small>"+o.d+"</small>");
+  chipGroup($("aChips"), A_OPTS, S.a, o=>{S.a=o.k; update();}, o=>o.l+"<small>"+o.d+"</small>");
+  $("turns").value = S.turns; $("turnsVal").textContent = S.turns+(S.turns===1?" message":" messages");
+  $("users").value = usersToSlider(S.users); $("usersVal").textContent = fmtInt(S.users);
+  $("cpu").value = S.cpu; $("cpuVal").textContent = fmtInt(S.cpu);
+  chipGroup($("modeChips"), MODE_OPTS, S.mode, o=>{S.mode=o.k; update();});
+  const autoTxt = I.mode==="full" ? "Auto is sending your whole knowledge base with each message." : I.mode==="rag" ? "Auto is using retrieval because your files are over ~225 pages." : "No files, so this setting doesn't apply.";
+  $("modeHint").textContent = S.mode==="auto" ? autoTxt : S.mode==="full" ? "Every message carries all your files. Simple, but heavy." : "A search step finds the relevant pieces and sends only those.";
+  $("chunk").value = S.chunk; $("chunkVal").textContent = fmtTok(S.chunk)+" tokens";
+  $("chunkWrap").style.opacity = I.mode==="rag" ? 1 : .45;
+  chipGroup($("thinkChips"), THINK_OPTS, S.think, o=>{S.think=o.k; update();});
+  $("cache").checked = S.cache;
+  // provider chips double as the legend
+  const pc = $("provChips"); pc.innerHTML="";
+  PORDER.forEach(k=>{
+    const b=document.createElement("button"); b.type="button"; b.className="chip legend-chip";
+    const on = S.provs.includes(k);
+    b.setAttribute("aria-pressed", String(on));
+    b.innerHTML = '<span class="dot" style="background:var('+PROVIDERS[k].v+')"></span>'+PROVIDERS[k].name;
+    b.addEventListener("click",()=>{
+      if(on){ if(S.provs.length>1) S.provs = S.provs.filter(x=>x!==k); }
+      else S.provs = PORDER.filter(x=>x===k || S.provs.includes(x));
+      update();
+    });
+    pc.appendChild(b);
+  });
+  document.querySelectorAll(".seg button[data-sort]").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.sort===S.sort)));
+  document.querySelectorAll(".seg button[data-scale]").forEach(b=>b.setAttribute("aria-pressed", String(b.dataset.scale===S.scale)));
+}
+
+let lastRows = [];
+function render(){
+  const I = inputs();
+  const all = MODELS.map(m=>costFor(m,I));
+  lastRows = all;
+  const P = picks(all);
+  const top = P.top || all[0];
+
+  // stats
+  $("sPick").textContent = fmtUSD(top.monthly);
+  $("sPickName").textContent = top.m.name;
+  $("sMsg").textContent = fmtUSD(top.msg);
+  $("sVol").textContent = fmtInt(top.msgs);
+  $("sVolSub").textContent = fmtInt(S.users)+" people × "+S.cpu+" chats × "+S.turns+" msgs";
+  $("sTok").textContent = fmtTok(top.tokPerMsg);
+
+  // verdict
+  const V = kbVerdict(I);
+  $("kbMeter").style.setProperty("--pct", V.pct+"%");
+  $("kbMeterTxt").textContent = I.kbTok ? fmtTok(I.kbTok) : "0";
+  $("kbTitle").textContent = V.title; $("kbText").textContent = V.text;
+  $("kbList").innerHTML = V.list.map(x=>"<li>"+x+"</li>").join("");
+
+  // picks
+  const pickHTML = (r, tag, why, best) => !r ? "" : `
+    <div class="pick${best?" best":""}">
+      <span class="tag">${tag}</span>
+      <h3>${r.m.name}</h3>
+      <div class="prov"><span class="dot" style="background:var(${PROVIDERS[r.m.p].v})"></span>${PROVIDERS[r.m.p].name}${r.m.host?" · "+r.m.host:""} · ${r.m.tier}</div>
+      <div class="price">${fmtUSD(r.monthly)}<small> / month</small></div>
+      <p>${fmtUSD(r.msg)} per message. ${why}</p>
+    </div>`;
+  $("picks").innerHTML =
+    pickHTML(P.top, "Best quality", "The lowest-priced top-tier model that fits your setup. Pick this if answer quality drives revenue or client trust.", true) +
+    pickHTML(P.value, "Best balance", "Strong answers for most business work at a fraction of the frontier price. This is where most teams land.", false) +
+    pickHTML(P.cheap, "Lowest cost", P.cheap && P.cheap.m.p==="open" ? "The cheapest option that fits. It's open-weight, so check where the data is processed before you send client info." : "The cheapest option that fits. Good for simple, high-volume questions.", false);
+
+  // callout: full vs rag comparison
+  const co = $("callout");
+  if(I.kbTok>0 && P.value){
+    const full = costFor(P.value.m, I, "full"), rag = costFor(P.value.m, I, "rag");
+    const fitsFull = maxInput(I,"full") <= P.value.m.ctx;
+    let msg;
+    if(!fitsFull) msg = `<b>Retrieval required.</b> Your files are too big to send whole, even to ${P.value.m.name}. With retrieval it runs about ${fmtUSD(rag.monthly)} a month.`;
+    else if(full.monthly > rag.monthly*1.15) msg = `<b>Setup check:</b> on ${P.value.m.name}, sending your whole knowledge base each time costs about ${fmtUSD(full.monthly)} a month, and retrieval costs about ${fmtUSD(rag.monthly)}. Retrieval saves ${fmtUSD(full.monthly-rag.monthly)} a month at this volume.`;
+    else msg = `<b>Setup check:</b> on ${P.value.m.name}, sending your whole knowledge base each time costs about ${fmtUSD(full.monthly)} a month, close to retrieval at ${fmtUSD(rag.monthly)}. Whole-file is simpler and gives the model full context, so it's a fine choice here.`;
+    co.innerHTML = msg; co.hidden = false;
+  } else co.hidden = true;
+
+  // chart
+  let rows = all.filter(r=>S.provs.includes(r.m.p));
+  if(S.sort==="cost") rows.sort((a,b)=>a.monthly-b.monthly);
+  else rows.sort((a,b)=>PORDER.indexOf(a.m.p)-PORDER.indexOf(b.m.p) || TIER_RANK[a.m.tier]-TIER_RANK[b.m.tier]);
+  const max = Math.max(...rows.map(r=>r.monthly), 1e-9);
+  const minV = Math.max(Math.min(...rows.map(r=>r.monthly)), 1e-9);
+  const logLo = Math.log10(minV) - 0.3, logHi = Math.log10(max);
+  const pct = v => S.scale==="log" ? Math.max(1.5, (Math.log10(Math.max(v,1e-9))-logLo)/Math.max(logHi-logLo,1e-6)*100) : Math.max(0.4, v/max*100);
+  const ch = $("chart"); ch.innerHTML = "";
+  rows.forEach(r=>{
+    const row = document.createElement("div");
+    row.className="bar-row"; row.tabIndex=0;
+    row.setAttribute("aria-label", `${r.m.name}, ${fmtUSD(r.monthly)} per month`);
+    const w = pct(r.monthly);
+    row.innerHTML = `<div class="bar-name"><span class="dot" style="background:var(${PROVIDERS[r.m.p].v})"></span>${r.m.name} <span class="tier">${r.m.tier}</span></div>
+      <div class="bar-track"><div class="bar${r.fallback?" nofit":""}" style="width:calc(${w}% - 90px);background-color:var(${PROVIDERS[r.m.p].v})"></div>
+      <span class="bar-val">${fmtUSD(r.monthly)}${r.fallback?'<span class="warn">retrieval</span>':""}${!r.fits?'<span class="warn">too big</span>':""}</span></div>`;
+    const show = e => showTip(e, r, row);
+    row.addEventListener("mouseenter", show); row.addEventListener("mousemove", show);
+    row.addEventListener("focus", show); row.addEventListener("click", show);
+    row.addEventListener("mouseleave", hideTip); row.addEventListener("blur", hideTip);
+    ch.appendChild(row);
+  });
+  const lo = rows[0], hi = rows[rows.length-1];
+  $("axisNote").textContent = (S.scale==="log"?"Log scale: each step in bar length is a multiple, not a fixed dollar amount. ":"") + (rows.length>1 && S.sort==="cost" ? `The most expensive model here costs ${Math.round(hi.monthly/Math.max(lo.monthly,1e-9)).toLocaleString("en-US")}x the cheapest for the same workload.` : "");
+
+  // breakdown for top pick
+  const p = top.parts, tot = p.sys+p.kb+p.hist+p.q+p.out || 1;
+  const mult = S.users*S.cpu;
+  $("breakSub").textContent = `Monthly cost split for ${top.m.name}. ${top.mode==="full"?"Your whole knowledge base rides along on every message.":top.mode==="rag"?"Retrieval sends "+fmtTok(Math.min(S.chunk,I.kbTok))+" tokens of your files per message.":"No knowledge base."}`;
+  const parts = [
+    {k:"Instructions", v:p.sys, c:"var(--p1)"},
+    {k:"Knowledge files", v:p.kb, c:"var(--p2)"},
+    {k:"Chat history", v:p.hist, c:"var(--p3)"},
+    {k:"Questions", v:p.q, c:"var(--p4)"},
+    {k:"Answers + thinking", v:p.out, c:"var(--p5)"}
+  ];
+  $("break").innerHTML = [
+    {k:"Input cost / mo", v:fmtUSD(top.inMonthly)},
+    {k:"Output cost / mo", v:fmtUSD(top.outMonthly)},
+    {k:"Largest single prompt", v:fmtTok(top.maxIn)+" tok"},
+    {k:"Context window", v:fmtTok(top.m.ctx)+" tok"}
+  ].map(b=>`<div class="brk"><div class="k">${b.k}</div><div class="v">${b.v}</div></div>`).join("");
+  $("stackbar").innerHTML = parts.filter(x=>x.v>0).map(x=>`<div style="flex:${x.v/tot};background:${x.c}"></div>`).join("");
+  $("stackLegend").innerHTML = parts.map(x=>`<span class="legend-chip"><span class="dot" style="background:${x.c}"></span>${x.k} ${Math.round(x.v/tot*100)}% · ${fmtUSD(x.v*mult)}</span>`).join("");
+
+  renderTable(all);
+}
+
+let tSort = {key:"monthly", dir:1};
+const COLS = [
+  {k:"name", l:"Model", f:r=>r.m.name, v:r=>r.m.name},
+  {k:"prov", l:"Provider", f:r=>PROVIDERS[r.m.p].name+(r.m.host?" ("+r.m.host+")":""), v:r=>PORDER.indexOf(r.m.p)},
+  {k:"tier", l:"Tier", f:r=>r.m.tier, v:r=>TIER_RANK[r.m.tier]},
+  {k:"ctx", l:"Context", f:r=>fmtTok(r.m.ctx), v:r=>r.m.ctx},
+  {k:"in", l:"Input $/1M", f:r=>"$"+r.m.in.toFixed(2), v:r=>r.m.in},
+  {k:"cache", l:"Cached $/1M", f:r=>r.m.cache==null?"–":"$"+(r.m.cache<0.1?r.m.cache.toFixed(3):r.m.cache.toFixed(2)), v:r=>r.m.cache==null?r.m.in:r.m.cache},
+  {k:"out", l:"Output $/1M", f:r=>"$"+r.m.out.toFixed(2), v:r=>r.m.out},
+  {k:"msg", l:"Per message", f:r=>fmtUSD(r.msg), v:r=>r.msg},
+  {k:"conv", l:"Per chat", f:r=>fmtUSD(r.conv), v:r=>r.conv},
+  {k:"monthly", l:"Per month", f:r=>"<b>"+fmtUSD(r.monthly)+"</b>", v:r=>r.monthly},
+  {k:"fit", l:"Setup", f:r=>!r.fits?'<span class="fit-no">Too big</span>':r.fallback?'<span class="fit-no">Retrieval</span>':r.mode==="full"?"Whole file":r.mode==="rag"?"Retrieval":"Prompt only", v:r=>r.fits?(r.fallback?1:0):2}
+];
+function renderTable(rows){
+  const th = $("tbl").tHead, tb = $("tbl").tBodies[0];
+  th.innerHTML = "<tr>"+COLS.map(c=>`<th scope="col" data-k="${c.k}"${c.k===tSort.key?` aria-sort="${tSort.dir>0?"ascending":"descending"}"`:""}>${c.l}</th>`).join("")+"</tr>";
+  th.querySelectorAll("th").forEach(el=>el.addEventListener("click",()=>{
+    const k = el.dataset.k; tSort = {key:k, dir: tSort.key===k ? -tSort.dir : 1}; renderTable(lastRows);
+  }));
+  const col = COLS.find(c=>c.k===tSort.key);
+  const sorted = rows.slice().sort((a,b)=>{const x=col.v(a), y=col.v(b); return (x>y?1:x<y?-1:0)*tSort.dir;});
+  tb.innerHTML = sorted.map(r=>"<tr>"+COLS.map(c=>`<td>${c.k==="name"?`<span class="dot" style="background:var(${PROVIDERS[r.m.p].v});margin-right:7px"></span>`:""}${c.f(r)}</td>`).join("")+"</tr>").join("");
+}
+
+// tooltip
+const tip = $("tip");
+function showTip(e, r, row){
+  const I = inputs();
+  tip.innerHTML = `<h4><span class="dot" style="background:var(${PROVIDERS[r.m.p].v})"></span>${r.m.name}</h4>
+    <div class="r"><span>Per month</span><b>${fmtUSD(r.monthly)}</b></div>
+    <div class="r"><span>Per chat (${I.turns} msgs)</span><b>${fmtUSD(r.conv)}</b></div>
+    <div class="r"><span>Per message</span><b>${fmtUSD(r.msg)}</b></div>
+    <div class="r"><span>Input / output</span><b>${fmtUSD(r.inMonthly)} / ${fmtUSD(r.outMonthly)}</b></div>
+    <div class="r"><span>List price in / out</span><b>$${r.m.in} / $${r.m.out}</b></div>
+    <div class="r"><span>Context window</span><b>${fmtTok(r.m.ctx)}</b></div>
+    <div class="r"><span>Setup</span><b>${r.mode==="full"?"Whole file":r.mode==="rag"?"Retrieval":"Prompt only"}</b></div>
+    ${r.fallback?'<div class="r" style="color:var(--warn)">Full knowledge base doesn\'t fit, priced with retrieval</div>':""}
+    ${!r.fits?'<div class="r" style="color:var(--warn)">Even with retrieval, long chats overflow this window</div>':""}
+    ${r.m.note?`<div class="r"><span>${r.m.note}</span></div>`:""}`;
+  const rect = row.getBoundingClientRect();
+  let x = (e && e.clientX) ? e.clientX + 14 : rect.left + 180;
+  let y = (e && e.clientY) ? e.clientY + 14 : rect.bottom + 6;
+  tip.classList.add("on");
+  const tw = tip.offsetWidth, tht = tip.offsetHeight;
+  if(x + tw > window.innerWidth - 8) x = Math.max(8, window.innerWidth - tw - 8);
+  if(y + tht > window.innerHeight - 8) y = Math.max(8, y - tht - 28);
+  tip.style.left = x+"px"; tip.style.top = y+"px";
+}
+function hideTip(){ tip.classList.remove("on"); }
+window.addEventListener("scroll", hideTip, {passive:true});
+
+function update(){ renderControls(); render(); save(); }
+
+// events
+$("kb").addEventListener("input", e=>{ S.kbPages = kbFromSlider(+e.target.value); update(); });
+$("sys").addEventListener("input", e=>{ S.sys = +e.target.value; update(); });
+$("turns").addEventListener("input", e=>{ S.turns = +e.target.value; update(); });
+$("users").addEventListener("input", e=>{ S.users = usersFromSlider(+e.target.value); update(); });
+$("cpu").addEventListener("input", e=>{ S.cpu = +e.target.value; update(); });
+$("chunk").addEventListener("input", e=>{ S.chunk = +e.target.value; update(); });
+$("cache").addEventListener("change", e=>{ S.cache = e.target.checked; update(); });
+document.querySelectorAll(".seg button[data-sort]").forEach(b=>b.addEventListener("click",()=>{ S.sort=b.dataset.sort; update(); }));
+document.querySelectorAll(".seg button[data-scale]").forEach(b=>b.addEventListener("click",()=>{ S.scale=b.dataset.scale; update(); }));
+$("resetBtn").addEventListener("click", ()=>{ S = Object.assign({}, DEFAULTS, {provs:PORDER.slice()}); update(); });
+
+// theme
+const root = document.documentElement;
+try{ const t = localStorage.getItem("tub-cost-calc-theme"); if(t) root.setAttribute("data-theme", t); }catch(e){}
+function isDark(){ const t = root.getAttribute("data-theme"); return t ? t==="dark" : matchMedia("(prefers-color-scheme: dark)").matches; }
+function themeLabel(){ $("themeBtn").textContent = isDark() ? "Light mode" : "Dark mode"; }
+$("themeBtn").addEventListener("click", ()=>{ const n = isDark() ? "light" : "dark"; root.setAttribute("data-theme", n); try{ localStorage.setItem("tub-cost-calc-theme", n); }catch(e){} themeLabel(); });
+themeLabel();
+
+update();
+})();
+</script>
+</body>
+</html>
